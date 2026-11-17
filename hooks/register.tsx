@@ -37,6 +37,22 @@ const LOOK: ThemeSetArgs = {
   backdrop: { scene: SCENE, glass: { blur: 0, tint: '#0d1b2e', opacity: 0.45 } },
 }
 
+// The same look, with the picture's name written a second time as `id`.
+// Why: engines differ in the label they use for a backdrop picture's name. Anthropic's
+// theme-examples plugin says in its code that the newest engines read `scene` and the ones
+// before them read `id`, and that an engine drops the label it does not know. Giving both lets
+// one theme work on both. The type has no `id`, so this is cast.
+// Not checked here: an engine that reads `id`. This was only run on one that reads `scene`.
+const LOOK_BOTH_LABELS = { ...LOOK, backdrop: { ...LOOK.backdrop, id: SCENE } } as unknown as ThemeSetArgs
+
+// The picture's name as the engine hands it to the Backdrop hook: under `scene` or, on the
+// engines that use the other label, under `id`.
+function sceneNameOf(props: unknown): unknown {
+  const named = props as { scene?: unknown; id?: unknown }
+
+  return typeof named.scene === 'string' ? named.scene : named.id
+}
+
 // Each of Claude's replies sits in a rounded box. The fill is navy at about 70% solid
 // (the last two hex digits, b3), so the drawing shows through a little.
 // A Box has no blur setting, so the drawing behind a reply is not blurred.
@@ -51,7 +67,14 @@ export const register: Register = on => {
     if (unpainted !== undefined) {
       $.ui.toast(unpainted)
     }
-    const set = await $.theme.set(LOOK)
+    // First with both labels. If this engine refuses the extra label, set it again without.
+    let set: Awaited<ReturnType<typeof $.theme.set>>
+
+    try {
+      set = await $.theme.set(LOOK_BOTH_LABELS)
+    } catch {
+      set = await $.theme.set(LOOK)
+    }
 
     if (!set.isDrawn) {
       $.ui.status(set.reason)
@@ -62,7 +85,7 @@ export const register: Register = on => {
 
   // Draws the picture behind the conversation. Only the desktop and mobile apps have a backdrop.
   on('ui.render', { component: 'Backdrop' }, ($, e, next) => {
-    if ((e.surface !== 'desktop' && e.surface !== 'mobile') || e.props.scene !== SCENE) {
+    if ((e.surface !== 'desktop' && e.surface !== 'mobile') || sceneNameOf(e.props) !== SCENE) {
       return next(e)
     }
 

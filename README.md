@@ -34,6 +34,17 @@ Then restart the app, open a thread and send a message. The background shows aft
 - A brand new thread shows no background until you send a message.
 - Whether the picture moves depends on the app. On some setups the app holds a background still.
 
+## Update
+
+To get a newer version, from a shell:
+
+```
+claude plugin marketplace update beach-sunset
+claude plugin update beach-sunset@beach-sunset
+```
+
+Then restart the app.
+
 ## Turn it off
 
 ```
