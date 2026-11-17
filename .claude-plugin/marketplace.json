@@ -1,0 +1,5 @@
+{
+  "name": "beach-sunset",
+  "owner": { "name": "ethaniccc" },
+  "plugins": [{ "name": "beach-sunset", "source": "./" }]
+}
